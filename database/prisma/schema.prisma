@@ -1,0 +1,61 @@
+generator client {
+    provider        = "prisma-client-js"
+    previewFeatures = ["relationJoins"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum Role {
+    OWNER
+    MEMBER
+}
+
+model Organization {
+    id        String    @id @default(uuid())
+    name      String
+    slug      String    @unique
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    owner   User     @relation(fields: [ownerId], references: [id])
+    ownerId String   @map("owner_id")
+    members Member[]
+
+    @@map("organizations")
+}
+
+model Member {
+    id        String    @id @default(uuid())
+    role      Role      @default(MEMBER)
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    user           User         @relation(fields: [userId], references: [id])
+    userId         String       @map("user_id")
+    organization   Organization @relation(fields: [organizationId], references: [id])
+    organizationId String       @map("organization_id")
+
+    @@unique([userId, organizationId])
+    @@map("members")
+}
+
+model User {
+    id        String    @id @default(uuid())
+    avatar    String?
+    name      String
+    email     String    @unique
+    password  String
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    member_on          Member[]
+    owns_organizations Organization[]
+
+    @@map("users")
+}
