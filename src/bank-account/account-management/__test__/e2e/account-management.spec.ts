@@ -6,15 +6,15 @@ import { PrismaClient } from '@prisma/client'
 import { hash } from 'bcrypt'
 import { PrismaService } from '@src/shared/module/persistence/prisma/prisma.service'
 import { AppModule } from '@src/app.module'
-import { CategoryRepository } from '../../persistence/repository/category.repository'
-import { CategoryModel } from '../../core/model/category.model'
+import { BankAccountRepository } from '../../persistence/repository/bank-account.repository'
+import { BankAccountModel } from '../../core/model/bank-account.model'
 
 describe('Transaction management e2e test', () => {
   let app: INestApplication
   let module: TestingModule
   let accessToken: string
   let prisma: PrismaClient
-  let categoryRepo: CategoryRepository
+  let bankAccountRepo: BankAccountRepository
 
   beforeAll(async () => {
     const nestTestSetup = await createNestApp([AppModule])
@@ -22,7 +22,7 @@ describe('Transaction management e2e test', () => {
     module = nestTestSetup.module
 
     prisma = module.get<PrismaService>(PrismaService)
-    categoryRepo = module.get<CategoryRepository>(CategoryRepository)
+    bankAccountRepo = module.get<BankAccountRepository>(BankAccountRepository)
     await prisma.$transaction([
       prisma.user.create({
         data: {
@@ -59,7 +59,7 @@ describe('Transaction management e2e test', () => {
   })
 
   afterEach(async () => {
-    await categoryRepo.clear()
+    await bankAccountRepo.clear()
   })
 
   afterAll(async () => {
@@ -71,24 +71,28 @@ describe('Transaction management e2e test', () => {
     module.close()
   })
 
-  describe('/categories (POST)', () => {
-    it('creates a new category', async () => {
+  describe('/bank-accounts (POST)', () => {
+    it('creates a new bank account', async () => {
       const response = await request(app.getHttpServer())
-        .post('/categories')
+        .post('/bank-accounts')
         .set('Authorization', `Bearer ${accessToken}`)
         .set('x-org-id', 'org-id')
         .send({
-          name: 'category',
-          color: '#000000',
-          description: 'category description',
+          name: 'bankAccount',
+          balance: 0,
+          ownerId: 'member-id',
         })
 
       expect(response.status).toBe(HttpStatus.CREATED)
       expect(response.body).toEqual({
         id: expect.any(String),
-        name: 'category',
-        color: '#000000',
-        description: 'category description',
+        name: 'bankAccount',
+        balance: 0,
+        ownerId: 'member-id',
+        organizationId: 'org-id',
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        deletedAt: null,
       })
     })
 
@@ -98,92 +102,71 @@ describe('Transaction management e2e test', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .set('x-org-id', 'non-existent-org-id')
         .send({
-          name: 'category',
-          color: '#000000',
-          description: 'category description',
+          name: 'bankAccount',
+          balance: 0,
+          ownerId: 'member-id',
         })
 
       expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
     })
   })
 
-  describe('/categories/:id (PATCH)', () => {
-    it('updates a category', async () => {
-      const model = CategoryModel.create({
-        name: 'category',
+  describe('/bank-accounts/:id (PATCH)', () => {
+    it('updates a bank account', async () => {
+      const model = BankAccountModel.create({
+        name: 'bankAccount',
+        balance: 0,
+        ownerId: 'member-id',
         organizationId: 'org-id',
-        color: '#000000',
-        description: 'category description',
       })
-      await categoryRepo.save(model)
+      await bankAccountRepo.save(model)
+
       const response = await request(app.getHttpServer())
-        .patch(`/categories/${model.id}`)
+        .patch(`/bank-accounts/${model.id}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          name: 'updated category',
-          color: '#FFFFFF',
-          description: 'updated category description',
+          name: 'newBankAccount',
+          balance: 100,
         })
 
       expect(response.status).toBe(HttpStatus.OK)
       expect(response.body).toEqual({
         id: model.id,
-        name: 'updated category',
-        color: '#FFFFFF',
-        description: 'updated category description',
+        name: 'newBankAccount',
+        balance: 100,
+        ownerId: 'member-id',
+        organizationId: 'org-id',
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        deletedAt: null,
       })
     })
 
-    it('throws error when category does not exist', async () => {
+    it('throws error when bank account does not exist', async () => {
       const response = await request(app.getHttpServer())
-        .patch('/categories/non-existent-category-id')
+        .patch(`/bank-accounts/${'non-existent-id'}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          name: 'category',
-          color: '#000000',
-          description: 'category description',
+          name: 'newBankAccount',
+          balance: 100,
         })
 
-      expect(response.status).toBe(HttpStatus.NOT_FOUND)
+      expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
     })
   })
 
-  describe('/categories/:id (DELETE)', () => {
-    it('deletes a category', async () => {
-      const model = CategoryModel.create({
-        name: 'category',
+  describe('/bank-accounts (GET)', () => {
+    it('gets all organization bank accounts', async () => {
+      const model = BankAccountModel.create({
+        name: 'bankAccount',
+        balance: 0,
+        ownerId: 'member-id',
         organizationId: 'org-id',
-        color: '#000000',
-        description: 'category description',
       })
-      await categoryRepo.save(model)
+      await bankAccountRepo.save(model)
+
       const response = await request(app.getHttpServer())
-        .delete(`/categories/${model.id}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-
-      expect(response.status).toBe(HttpStatus.NO_CONTENT)
-    })
-
-    it('throws error when category does not exist', async () => {
-      const response = await request(app.getHttpServer())
-        .delete('/categories/non-existent-category-id')
-        .set('Authorization', `Bearer ${accessToken}`)
-
-      expect(response.status).toBe(HttpStatus.NOT_FOUND)
-    })
-  })
-
-  describe('/categories (GET)', () => {
-    it('returns all organization categories', async () => {
-      const model = CategoryModel.create({
-        name: 'category',
-        organizationId: 'org-id',
-        color: '#000000',
-        description: 'category description',
-      })
-      await categoryRepo.save(model)
-      const response = await request(app.getHttpServer())
-        .get('/categories')
+        .get('/bank-accounts')
         .set('Authorization', `Bearer ${accessToken}`)
         .set('x-org-id', 'org-id')
 
@@ -191,18 +174,41 @@ describe('Transaction management e2e test', () => {
       expect(response.body).toEqual([
         {
           id: model.id,
-          name: 'category',
-          color: '#000000',
-          description: 'category description',
+          name: 'bankAccount',
+          balance: 0,
+          ownerId: 'member-id',
+          organizationId: 'org-id',
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
+          deletedAt: null,
         },
       ])
     })
+  })
 
-    it('throws error when organization does not exist', async () => {
+  describe('/bank-accounts/:id (DELETE)', () => {
+    it('deletes a bank account', async () => {
+      const model = BankAccountModel.create({
+        name: 'bankAccount',
+        balance: 0,
+        ownerId: 'member-id',
+        organizationId: 'org-id',
+      })
+      await bankAccountRepo.save(model)
+
       const response = await request(app.getHttpServer())
-        .get('/categories')
+        .delete(`/bank-accounts/${model.id}`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .set('x-org-id', 'non-existent-org-id')
+        .set('x-org-id', 'org-id')
+
+      expect(response.status).toBe(HttpStatus.NO_CONTENT)
+    })
+
+    it('throws error when bank account does not exist', async () => {
+      const response = await request(app.getHttpServer())
+        .delete(`/bank-accounts/${'non-existent-id'}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .set('x-org-id', 'org-id')
 
       expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
     })

@@ -53,6 +53,7 @@ describe('Transaction management e2e test', () => {
           name: 'bank account',
           ownerId: 'member-id',
           balance: 0,
+          organizationId: 'org-id',
         },
       }),
     ])
