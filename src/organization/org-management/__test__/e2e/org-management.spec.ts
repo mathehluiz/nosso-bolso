@@ -63,16 +63,14 @@ describe('Organization management e2e test', () => {
         .post('/organization')
         .send({
           name: 'Org Name',
-          address: 'Org Address',
-          document: 'Org Document',
+          slug: 'org-name',
           ownerId: user.id,
         })
         .expect(HttpStatus.CREATED)
       expect(response.body).toEqual(
         expect.objectContaining({
           name: 'Org Name',
-          address: 'Org Address',
-          document: 'Org Document',
+          slug: 'org-name',
           ownerId: user.id,
         }),
       )
@@ -107,8 +105,7 @@ describe('Organization management e2e test', () => {
         expect.objectContaining({
           id: orgModel.id,
           name: 'Org Name',
-          address: 'Org Address',
-          document: 'Org Document',
+          slug: 'org-name',
           ownerId: user.id,
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
@@ -144,7 +141,7 @@ describe('Organization management e2e test', () => {
         .auth(accessToken, { type: 'bearer' })
         .send({
           userId: user2.id,
-          role: 'ADMIN',
+          role: 'MEMBER',
         })
         .expect(HttpStatus.CREATED)
     })
@@ -161,7 +158,7 @@ describe('Organization management e2e test', () => {
         .auth(accessToken, { type: 'bearer' })
         .send({
           userId: user.id,
-          role: 'ADMIN',
+          role: 'MEMBER',
         })
         .expect(HttpStatus.CONFLICT)
     })
@@ -173,7 +170,7 @@ describe('Organization management e2e test', () => {
         .auth(accessToken, { type: 'bearer' })
         .send({
           userId: user.id,
-          role: 'ADMIN',
+          role: 'MEMBER',
         })
         .expect(HttpStatus.FORBIDDEN)
     })

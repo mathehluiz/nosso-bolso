@@ -7,7 +7,6 @@ import {
 import { JwtService } from '@nestjs/jwt'
 import { UserModel } from '@src/organization/org-management/core/model/user.model'
 import { UserManagementService } from '@src/organization/org-management/core/service/user-management.service'
-import { ConfigService } from '@src/shared/module/config/config.service'
 import { Request } from 'express'
 
 export interface AuthenticatedRequest extends Request {
@@ -19,7 +18,6 @@ export class AuthGuard implements CanActivate {
   constructor(
     private readonly userManagementService: UserManagementService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -28,7 +26,7 @@ export class AuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException()
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get('jwt.secret'),
+        secret: 'secret',
       })
 
       const user = await this.userManagementService.getUserById(payload.sub)

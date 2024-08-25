@@ -13,3 +13,40 @@
 - **Income Tracking**: Track your income from various sources.
 - **Financial Reports**: Generate detailed financial reports to gain insights into your spending habits.
 - **Security**: Ensure your data is protected with robust security measures.
+
+## Running the app
+
+Below are the instructions to set up, run, and test the project.
+
+## Prerequisites
+
+Before you begin, ensure you have met the following requirements:
+
+- **Node.js**: Version 20.x or later
+- **npm**: Version 12.x or later
+- **Nest CLI**: Globally installed (`npm install -g @nestjs/cli`)
+- **Docker** (optional, if using Docker to run the application)
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/mathehluiz/nossobolso.git
+   cd nossobolso
+   ```
+2. Install dependencies
+   ```bash
+    yarn
+   ```
+3. Run the app
+   ```bash
+   npm run start
+   ```
+
+## Environment variables
+
+Create a .env file in the root directory and configure the necessary environment variables. You can follow the `.env.default` file, that contains all needed variables. Below is an example:
+
+`PORT=`
+
+`DATABASE_URL=`

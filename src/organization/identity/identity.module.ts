@@ -5,21 +5,26 @@ import { AuthService } from './core/service/authentication.service'
 import { UserManagementService } from '../org-management/core/service/user-management.service'
 import { UserRepository } from '../org-management/persistence/repository/user.repository'
 import { AuthController } from './http/auth.controller'
-import { ConfigService } from '@src/shared/module/config/config.service'
+import { MembershipManagementService } from '../org-management/core/service/membership-management.service'
+import { MembershipRepository } from '../org-management/persistence/repository/membership.repository'
 
 @Module({
   imports: [
-    JwtModule.registerAsync({
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get('jwt.secret'),
-        signOptions: { expiresIn: '1d' },
-        global: true,
-      }),
-      inject: [ConfigService],
+    JwtModule.register({
+      global: true,
+      secret: 'secret',
+      signOptions: { expiresIn: '4h' },
     }),
     PersistenceModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserManagementService, UserRepository],
+  providers: [
+    AuthService,
+    UserManagementService,
+    MembershipManagementService,
+    MembershipRepository,
+    UserRepository,
+  ],
+  exports: [UserManagementService, MembershipManagementService],
 })
 export class IdentityModule {}

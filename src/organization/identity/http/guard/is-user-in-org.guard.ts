@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common'
 import { User } from '@prisma/client'
-import { MembershipRepository } from '@src/organization/org-management/persistence/repository/membership.repository'
+import { MembershipManagementService } from '@src/organization/org-management/core/service/membership-management.service'
 import { Request } from 'express'
 
 interface CustomRequest extends Request {
@@ -14,7 +14,7 @@ interface CustomRequest extends Request {
 
 @Injectable()
 export class IsUserInOrg implements CanActivate {
-  constructor(private membershipRepository: MembershipRepository) {}
+  constructor(private membershipService: MembershipManagementService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<CustomRequest & { user: User }>()
@@ -25,12 +25,9 @@ export class IsUserInOrg implements CanActivate {
 
     if (!orgId) throw new ForbiddenException('No organization found')
 
-    const user = await this.membershipRepository.findOneBy({
-      userId: reqUser.id,
-      organizationId: orgId,
-    })
+    const member = await this.membershipService.getMembership(orgId, reqUser.id)
 
-    if (user) return true
+    if (member) return true
 
     return false
   }
