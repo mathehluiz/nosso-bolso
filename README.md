@@ -40,7 +40,8 @@ Before you begin, ensure you have met the following requirements:
    ```
 3. Run the app
    ```bash
-   npm run start
+   yarn build
+   yarn start
    ```
 
 ## Environment variables
