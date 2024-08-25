@@ -33,9 +33,10 @@ model Organization {
     updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
 
-    owner   User     @relation(fields: [ownerId], references: [id])
-    ownerId String   @map("owner_id")
-    members Member[]
+    owner      User       @relation(fields: [ownerId], references: [id])
+    ownerId    String     @map("owner_id")
+    members    Member[]
+    categories Category[]
 
     @@map("organizations")
 }
@@ -99,7 +100,9 @@ model Category {
     updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
     deletedAt   DateTime? @map("deleted_at")
 
-    transactions Transaction[]
+    transactions   Transaction[]
+    organization   Organization  @relation(fields: [organizationId], references: [id])
+    organizationId String        @map("organization_id")
 
     @@map("categories")
 }
