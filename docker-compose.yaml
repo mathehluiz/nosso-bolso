@@ -1,0 +1,54 @@
+name: "nosso-bolso"
+services:
+  backend:
+    build: ./api
+    container_name: nestjs-app
+    restart: always
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: test
+      DATABASE_PASSWORD: test
+      DATABASE_NAME: nossobolso-dev
+      DATABASE_URL: postgres://test:test@db:5432/nossobolso-dev
+      JWT_SECRET: coxinha123
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+    command: >
+      sh -c "
+      npx prisma migrate deploy &&
+      node dist/main
+      "
+
+  db:
+    image: postgres:16
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: nossobolso-dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  frontend:
+    build: ./www
+    container_name: nextjs-app
+    restart: always
+    environment:
+      NEXT_PUBLIC_API_URL: "http://backend:4000/api/v1"
+      NEXTAUTH_SECRET: "coxinha123"
+      NEXTAUTH_URL: "http://localhost:3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres-data:
