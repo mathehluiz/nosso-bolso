@@ -1,0 +1,182 @@
+generator client {
+    provider        = "prisma-client-js"
+    previewFeatures = ["relationJoins"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum Role {
+    OWNER
+    MEMBER
+}
+
+enum TransactionType {
+    INCOME
+    EXPENSE
+}
+
+enum Frequency {
+    DAILY
+    WEEKLY
+    MONTHLY
+    YEARLY
+}
+
+model Organization {
+    id        String    @id @default(uuid())
+    name      String
+    slug      String    @unique
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    owner         User          @relation(fields: [ownerId], references: [id])
+    ownerId       String        @map("owner_id")
+    members       Member[]
+    categories    Category[]
+    bank_accounts BankAccount[]
+    transactions  Transaction[]
+
+    @@map("organizations")
+}
+
+model Member {
+    id        String    @id @default(uuid())
+    role      Role      @default(MEMBER)
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    user           User          @relation(fields: [userId], references: [id])
+    userId         String        @map("user_id")
+    organization   Organization  @relation(fields: [organizationId], references: [id])
+    organizationId String        @map("organization_id")
+    bank_acccounts BankAccount[]
+
+    @@unique([userId, organizationId])
+    @@map("members")
+}
+
+model User {
+    id        String    @id @default(uuid())
+    avatar    String?
+    name      String
+    email     String    @unique
+    password  String
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    member_on          Member[]
+    owns_organizations Organization[]
+    transactions       Transaction[]
+
+    @@map("users")
+}
+
+model BankAccount {
+    id        String    @id @default(uuid())
+    name      String
+    balance   Float     @default(0)
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    owner          Member        @relation(fields: [ownerId], references: [id])
+    ownerId        String        @map("owner_id")
+    organization   Organization  @relation(fields: [organizationId], references: [id])
+    organizationId String        @map("organization_id")
+    transactions   Transaction[]
+    goals          Goal[]
+
+    @@map("bank_accounts")
+}
+
+model Category {
+    id          String    @id @default(uuid())
+    name        String
+    color       String    @default("#000000")
+    description String?
+    createdAt   DateTime  @default(now()) @map("created_at")
+    updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt   DateTime? @map("deleted_at")
+
+    transactions   Transaction[]
+    organization   Organization  @relation(fields: [organizationId], references: [id])
+    organizationId String        @map("organization_id")
+
+    @@map("categories")
+}
+
+model Transaction {
+    id        String          @id @default(uuid())
+    amount    Float
+    type      TransactionType @default(EXPENSE)
+    note      String?
+    date      DateTime
+    paid      Boolean         @default(false)
+    createdAt DateTime        @default(now()) @map("created_at")
+    updatedAt DateTime        @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime?       @map("deleted_at")
+
+    created_by          User               @relation(fields: [createdById], references: [id])
+    createdById         String             @map("created_by_id")
+    category            Category?          @relation(fields: [categoryId], references: [id])
+    categoryId          String?            @map("category_id")
+    bank_account        BankAccount        @relation(fields: [bankAccountId], references: [id])
+    bankAccountId       String             @map("bank_account_id")
+    installments        Installment[]
+    recurring_schedule  RecurringSchedule? @relation(fields: [recurringScheduleId], references: [id])
+    recurringScheduleId String?            @map("recurring_schedule_id")
+    organization        Organization       @relation(fields: [organizationId], references: [id])
+    organizationId      String             @map("organization_id")
+
+    @@map("transactions")
+}
+
+model Installment {
+    id        String    @id @default(uuid())
+    amount    Float
+    dueDate   DateTime  @map("due_date")
+    paid      Boolean   @default(false)
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    transaction   Transaction @relation(fields: [transactionId], references: [id])
+    transactionId String      @map("transaction_id")
+
+    @@map("installments")
+}
+
+model RecurringSchedule {
+    id        String    @id @default(uuid())
+    name      String
+    frequency Frequency @default(DAILY)
+    interval  Int       @default(1)
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    transactions Transaction[]
+
+    @@map("recurring_schedules")
+}
+
+model Goal {
+    id        String    @id @default(uuid())
+    name      String
+    amount    Float
+    dueDate   DateTime  @map("due_date")
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    bank_account  BankAccount @relation(fields: [bankAccountId], references: [id])
+    bankAccountId String      @map("bank_account_id")
+
+    @@map("goals")
+}
